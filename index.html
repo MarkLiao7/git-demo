@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GA4 埋點測試網頁</title>
+
+    <!-- <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
+    ></script> -->
+    <!-- <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-XXXXXXXXXX");
+    </script> -->
+
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f2f5;
+      }
+      .container {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Hello World!</h1>
+      <p>這是一個用來測試 GitHub Pages 與 GA4 的簡單網頁。</p>
+
+      <button id="testClick">點擊測試 GA 事件</button>
+    </div>
+
+    <script>
+      // 3. 簡單的 JS 邏輯，用來模擬遊戲中的行為監測
+      document
+        .getElementById("testClick")
+        .addEventListener("click", function () {
+          alert("事件已觸發！請去 GA 後台的 DebugView 查看。");
+
+          // 觸發一個自定義事件給 GA
+          gtag("event", "test_button_click", {
+            event_category: "UX_Testing",
+            event_label: "HelloWorld_Page",
+          });
+        });
+    </script>
+  </body>
+</html>
