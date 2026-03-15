@@ -16,54 +16,94 @@
       }
       gtag("js", new Date());
 
-      //   gtag("config", "G-CP54LLJ2S2");
+      gtag("config", "G-CP54LLJ2S2");
 
-      function getSafeClientId() {
-        // 預設給一個暫存的 ID (存在記憶體中，重新整理會消失，但至少能發送事件)
-        let clientId =
-          "temp-" +
-          (crypto.randomUUID
-            ? crypto.randomUUID()
-            : Math.random().toString(36).substring(2));
+      const GATracker = {
+        // ⚠️ 測試前，請務必換成你自己的 ID 與 Secret
+        MEASUREMENT_ID: "G-CP54LLJ2S2",
+        API_SECRET: "p9ZAH3XeS8y_d2-YXxQFzQ",
 
-        try {
-          // 嘗試讀取，這裡在嚴格的 iframe 下極有可能會報錯拋出 Exception
-          let storedId = localStorage.getItem("my_custom_ga_client_id");
+        // 內部變數暫存
+        clientId: null,
+        // 產生一個時間戳當作 Session ID，讓同一次開啟的事件能串在一起
+        sessionId: Date.now().toString(),
 
-          if (!storedId) {
-            storedId = crypto.randomUUID
+        /**
+         * 取得安全的 Client ID (結合 LocalStorage 與防呆機制)
+         */
+        getClientId: function () {
+          if (this.clientId) return this.clientId;
+
+          // 預設一組隨機 ID
+          let id =
+            "temp-" +
+            (crypto.randomUUID
               ? crypto.randomUUID()
-              : "id-" + Date.now().toString();
-            // 嘗試寫入，這裡也可能報錯
-            localStorage.setItem("my_custom_ga_client_id", storedId);
+              : Math.random().toString(36).substring(2));
+
+          try {
+            const storageKey = "my_custom_ga_client_id";
+            let storedId = localStorage.getItem(storageKey);
+
+            if (!storedId) {
+              storedId = crypto.randomUUID
+                ? crypto.randomUUID()
+                : "id-" + Date.now().toString();
+              localStorage.setItem(storageKey, storedId);
+            }
+            id = storedId;
+          } catch (error) {
+            console.warn(
+              "LocalStorage 權限遭阻擋，降級使用記憶體暫存 Client ID",
+            );
           }
 
-          // 如果上面都沒報錯，就用 localStorage 裡的 ID
-          clientId = storedId;
-          console.log("成功使用 LocalStorage Client ID:", clientId);
-        } catch (error) {
-          // 捕捉到 DOMException！外層網頁把我們的 storage 權限拔掉了
-          console.warn(
-            "LocalStorage 被外層阻擋，降級使用記憶體暫存 Client ID:",
-            error,
-          );
-        }
+          this.clientId = id;
+          return this.clientId;
+        },
 
-        return clientId;
-      }
+        /**
+         * 發送事件到 GA4
+         * @param {string} eventName - 事件名稱 (例如: 'page_view')
+         * @param {object} params - 自定義參數 (可選)
+         */
+        sendEvent: async function (eventName, params = {}) {
+          const url = `https://www.google-analytics.com/mp/collect?measurement_id=${this.MEASUREMENT_ID}&api_secret=${this.API_SECRET}`;
 
-      // 執行 GA 初始化
-      const mySafeClientId = getSafeClientId();
+          // 組裝準備 POST 的資料格式
+          const payload = {
+            client_id: this.getClientId(),
+            events: [
+              {
+                name: eventName,
+                // 將傳入的參數與 GA4 必備參數合併
+                params: Object.assign({}, params, {
+                  session_id: this.sessionId,
+                  engagement_time_msec: "100", // 避免被當成無效流量
+                }),
+              },
+            ],
+          };
 
-      // 2. 【關鍵】使用 'set' 進行全域設定！
-      // 在 config 觸發前，全域禁止 gtag 使用 Cookie
-      gtag("set", "client_storage", "none");
+          try {
+            const response = await fetch(url, {
+              method: "POST",
+              body: JSON.stringify(payload),
+            });
 
-      // 全域強制綁定我們的 Client ID
-      gtag("set", "client_id", mySafeClientId);
+            // HTTP 204 No Content 是 GA API 成功的標準回傳
+            if (response.ok) {
+              console.log(`✅ GA 事件 [${eventName}] 發送成功`);
+            } else {
+              console.warn(`⚠️ GA 事件發送異常: HTTP ${response.status}`);
+            }
+          } catch (error) {
+            console.error("❌ GA 事件發送失敗 (可能是網路問題):", error);
+          }
+        },
+      };
 
-      // 3. 最後才執行 config 初始化
-      gtag("config", "G-CP54LLJ2S2");
+      window.GATracker = GATracker;
     </script>
 
     <style>
@@ -112,7 +152,16 @@
           alert("事件已觸發！請去 GA 後台的 DebugView 查看。");
 
           // 觸發一個自定義事件給 GA
-          gtag("event", "test_button_click", {
+          // gtag("event", "test_button_click", {
+          //   event_category: "UX_Testing",
+          //   event_label: "HelloWorld_Page",
+          // });
+
+          // GATracker.sendEvent("button_click", {
+          //   button_name: "test_btn_01",
+          // });
+
+          GATracker.sendEvent("test_button_click", {
             event_category: "UX_Testing",
             event_label: "HelloWorld_Page",
           });
