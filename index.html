@@ -16,7 +16,33 @@
       }
       gtag("js", new Date());
 
-      gtag("config", "G-CP54LLJ2S2");
+      //   gtag("config", "G-CP54LLJ2S2");
+
+      // 1. 嘗試從 localStorage 取得 Client ID
+      let myClientId = localStorage.getItem("my_custom_ga_client_id");
+
+      // 2. 如果沒有，就自己隨機生成一個 UUID (格式需符合 GA 要求)
+      if (!myClientId) {
+        // 簡單的 UUID v4 生成
+        myClientId = crypto.randomUUID
+          ? crypto.randomUUID()
+          : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+              /[xy]/g,
+              function (c) {
+                const r = (Math.random() * 16) | 0,
+                  v = c == "x" ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+              },
+            );
+        localStorage.setItem("my_custom_ga_client_id", myClientId);
+      }
+
+      // 3. 在 gtag config 中強制指定 client_id
+      gtag("config", "G-CP54LLJ2S2", {
+        client_id: myClientId,
+        // 可以搭配取消 cookie 使用
+        client_storage: "none",
+      });
     </script>
 
     <style>
