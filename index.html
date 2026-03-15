@@ -55,10 +55,15 @@
       // 執行 GA 初始化
       const mySafeClientId = getSafeClientId();
 
-      gtag("config", "G-CP54LLJ2S2", {
-        client_id: mySafeClientId,
-        client_storage: "none", // 告訴 GA 不要再嘗試寫 Cookie 了
-      });
+      // 2. 【關鍵】使用 'set' 進行全域設定！
+      // 在 config 觸發前，全域禁止 gtag 使用 Cookie
+      gtag("set", "client_storage", "none");
+
+      // 全域強制綁定我們的 Client ID
+      gtag("set", "client_id", mySafeClientId);
+
+      // 3. 最後才執行 config 初始化
+      gtag("config", "G-CP54LLJ2S2");
     </script>
 
     <style>
